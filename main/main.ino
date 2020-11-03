@@ -1,6 +1,6 @@
 
-#include <UTFTGLUE.h>              //use GLUE class and constructor
-UTFTGLUE tft(0,A2,A1,A3,A4,A0); //all dummy args
+#include <UTFTGLUE.h>
+UTFTGLUE tft(0,A2,A1,A3,A4,A0); 
 
 #define BLACK   0x0000
 #define RED     0xF800
@@ -8,11 +8,11 @@ UTFTGLUE tft(0,A2,A1,A3,A4,A0); //all dummy args
 #define WHITE   0xFFFF
 #define GREY    0x8410
 
-float inTemps[300];
-float outTemps[300];
-float inHumidity[300];
-float outHumidity[300];
-float pressure[300];
+short inTemps[300];   //Use short instead of float, because of memory usage
+short outTemps[300];
+short inHumidity[300];
+short outHumidity[300];
+short pressure[300];
 
 int year;
 byte month;
@@ -24,10 +24,10 @@ byte second;
 
 void generateDatas() {
   for(int i = 0; i < 300; i++){
-    inTemps[i] = random(20,30);
-    outTemps[i] = random(-10,30);
-    inHumidity[i] = random(50,100);
-    outHumidity[i] = random(0, 100);
+    inTemps[i] = random(20,30) * 10;
+    outTemps[i] = random(-10,30) * 10;
+    inHumidity[i] = random(50,100) * 10;
+    outHumidity[i] = random(0, 100) * 10;
     pressure[i] = random(900,1050);
   }
 }
@@ -43,10 +43,10 @@ void shiftData() {
 }
 
 void readSensorData() {
-  inTemps[299] = random(20,30);
-  outTemps[299] = random(-10,30);
-  inHumidity[299] = random(50,100);
-  outHumidity[299] = random(0, 100);
+  inTemps[299] = random(20,30) *10;
+  outTemps[299] = random(-10,30) * 10;
+  inHumidity[299] = random(50,100) * 10;
+  outHumidity[299] = random(0, 100) * 10;
   pressure[299] = random(900,1050);
 }
 
@@ -87,7 +87,7 @@ String getTimeString() {
 }
 
 
-void getMinMax(float* temps, float* minMax) {
+void getMinMax(short* temps, float* minMax) {
   float max = temps[0];
   float min = temps[0];
   for(int i = 0; i < 300; i++) {
@@ -106,8 +106,9 @@ void printTemps() {
   float deltaIn = (minMaxIn[1] - minMaxIn[0]) / 50;
   float deltaOut = (minMaxOut[1] - minMaxOut[0]) / 50;
   tft.setColor(245, 245, 60);
-  tft.print("IN temp", CENTER, 230);
-  tft.print("OUT temp", CENTER, 160);
+  tft.print("Temperature", CENTER, 90);
+  tft.print("IN", CENTER, 230);
+  tft.print("OUT", CENTER, 160);
   for(int x = 299; x >= 0; x--) {
     int sizeIn =  (int)((inTemps[x] - minMaxIn[0]) / deltaIn);
     int sizeOut =  (int)((outTemps[x] - minMaxOut[0]) / deltaOut);
@@ -119,11 +120,11 @@ void printTemps() {
     tft.drawLine(x + 10, 150, x + 10, 150 - sizeOut);
   }
   tft.setColor(50, 50, 200);
-  tft.print("Min: " + String(minMaxIn[0]), LEFT, 230);
-  tft.print("Min: " + String(minMaxOut[0]), LEFT, 160);
+  tft.print("Min: " + String(minMaxIn[0] / 10), LEFT, 230);
+  tft.print("Min: " + String(minMaxOut[0] / 10), LEFT, 160);
   tft.setColor(250, 50, 20);
-  tft.print("Max: " + String(minMaxIn[1]), RIGHT, 230);
-  tft.print("Max: " + String(minMaxOut[1]), RIGHT, 160);
+  tft.print("Max: " + String(minMaxIn[1] / 10), RIGHT, 230);
+  tft.print("Max: " + String(minMaxOut[1] / 10), RIGHT, 160);
 
 
 }
