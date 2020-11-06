@@ -4,7 +4,7 @@ void generateDatas() {
     outTemps[i] = random(-10,30) * 10;
     inHumidity[i] = random(50,100) * 10;
     outHumidity[i] = random(0, 100) * 10;
-    pressure[i] = random(900,1050);
+    pressure[i] = random(900,1050) * 10;
   }
 }
 
@@ -23,5 +23,5 @@ void readSensorData() {
   outTemps[STORE_SIZE - 1] = random(-10,30) * 10;
   inHumidity[STORE_SIZE - 1] = random(50,100) * 10;
   outHumidity[STORE_SIZE - 1] = random(0, 100) * 10;
-  pressure[STORE_SIZE - 1] = random(900,1050);
+  pressure[STORE_SIZE - 1] = random(900,1050) * 10;
 }

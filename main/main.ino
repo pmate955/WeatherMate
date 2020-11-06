@@ -43,20 +43,33 @@ byte second;
 
 byte displayPage;
 
-void printAll() {
+void printAll(boolean needRepaintAll) {
+  if(needRepaintAll) {
+    tft.print("              ", CENTER, 85);
+    tft.print("              ", LEFT, 225);  
+    tft.print("              ", RIGHT, 225); 
+    tft.print("              ", LEFT, 155);    
+    tft.print("              ", RIGHT, 155);                                                        
+  }
   tft.setTextColor(RED, GREY);
   tft.setTextSize(4);
   tft.print(getTimeString(), CENTER, 1);
   tft.print(" " + String(displayPage), CENTER, 20);
   tft.setColor(255, 0, 0);
-  if(second % 3 == 0) {
+  if(second % 3 == 0 || needRepaintAll) {
     shiftData();
     readSensorData();
     tft.setColor(153, 153, 140);
     tft.drawRect(8, 99, 311, 151);
     tft.drawRect(8, 169, 311, 221); 
     tft.setColor(255, 0, 0);
-    printTemps();
+    if(displayPage == 0) {
+      printGraph(inTemps, outTemps, 0);
+    } else if(displayPage == 1) {
+      printGraph(inHumidity, outHumidity, 1);
+    } else if(displayPage == 2) {
+      printGraph(pressure, pressure, 2);
+    } 
   } 
 }
 
@@ -73,6 +86,7 @@ void setup()
   nextBtn.initButton(&tft,  25, 60, 50, 35, OUTLINE_COLOR, NEXT_COLOR, BLACK, "NEXT", 1);
   prevBtn.drawButton(false);
   nextBtn.drawButton(false);
+  printAll(true);
 }
 
 void loop()
@@ -80,6 +94,6 @@ void loop()
   checkPress();
   if(millis() % 1000 == 0) {
     increaseTime();
-    printAll();   
+    printAll(false);   
   }
 }
