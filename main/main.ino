@@ -2,6 +2,11 @@
 #include <UTFTGLUE.h>
 #include <Adafruit_GFX.h>
 #include <TouchScreen.h>
+#include "WiFiEsp.h"
+#include "WiFiEspUdp.h"
+#include <Wire.h>
+#include "RTClib.h"
+
 #define MINPRESSURE 100
 #define MAXPRESSURE 1000
 
@@ -41,7 +46,24 @@ byte hour;
 byte minute;
 byte second;
 
+DS1307 rtc;
+
 byte displayPage;
+unsigned long timeStamp = 0;
+
+char ssid[] = "SSID";            // your network SSID (name)
+char pass[] = "PWD";        // your network password
+int status = WL_IDLE_STATUS;     // the Wifi radio's status
+
+char timeServer[] = "time.nist.gov";  // NTP server
+unsigned int localPort = 2390;        // local port to listen for UDP packets
+
+const int NTP_PACKET_SIZE = 48;  // NTP timestamp is in the first 48 bytes of the message
+const int UDP_TIMEOUT = 2000;    // timeout in miliseconds to wait for an UDP packet to arrive
+
+byte packetBuffer[NTP_PACKET_SIZE]; // buffer to hold incoming and outgoing packets
+
+WiFiEspUDP Udp;
 
 void printAll(boolean needRepaintAll) {
   if(needRepaintAll) {
@@ -54,7 +76,7 @@ void printAll(boolean needRepaintAll) {
   tft.setTextColor(RED, GREY);
   tft.setTextSize(4);
   tft.print(getTimeString(), CENTER, 1);
-  tft.print(" " + String(displayPage), CENTER, 20);
+  tft.print(" " + String(timeStamp), CENTER, 20);
   tft.setColor(255, 0, 0);
   if(second % 3 == 0 || needRepaintAll) {
     shiftData();
@@ -75,6 +97,13 @@ void printAll(boolean needRepaintAll) {
 
 void setup()
 {
+  Serial2.begin(9600);
+  WiFi.init(&Serial2);
+  if (WiFi.status() == WL_NO_SHIELD) {
+    while (true);
+  }
+  connectToWifi();
+  Udp.begin(localPort);
   randomSeed(analogRead(0));
   initTime();
   tft.InitLCD();
@@ -91,9 +120,11 @@ void setup()
 
 void loop()
 {
+  if(millis() % 25500 == 0) {
+    timeStamp = getTimeStamp();
+  }
   checkPress();
   if(millis() % 1000 == 0) {
-    increaseTime();
     printAll(false);   
   }
 }
