@@ -2,6 +2,8 @@
 #include <UTFTGLUE.h>
 #include <Adafruit_GFX.h>
 #include <TouchScreen.h>
+#include <Adafruit_Sensor.h>
+#include <Adafruit_BME280.h>
 #include "WiFiEsp.h"
 #include "WiFiEspUdp.h"
 #include <Wire.h>
@@ -38,6 +40,9 @@ short inHumidity[STORE_SIZE];
 short outHumidity[STORE_SIZE];
 short pressure[STORE_SIZE];
 
+boolean inValidDatas[STORE_SIZE];
+boolean outValidDatas[STORE_SIZE];
+
 int year;
 byte month;
 byte day;
@@ -46,13 +51,16 @@ byte hour;
 byte minute;
 byte second;
 
+byte lastTimeUpdate;
+
 DS1307 rtc;
+Adafruit_BME280 bme;
 
 byte displayPage;
 unsigned long timeStamp = 0;
 
-char ssid[] = "SSID";            // your network SSID (name)
-char pass[] = "PWD";        // your network password
+char ssid[] = "Redmi";            // your network SSID (name)
+char pass[] = "Zsalmafa";        // your network password
 int status = WL_IDLE_STATUS;     // the Wifi radio's status
 
 char timeServer[] = "time.nist.gov";  // NTP server
@@ -79,7 +87,7 @@ void printAll(boolean needRepaintAll) {
   tft.print(" " + String(timeStamp), CENTER, 20);
   tft.setColor(255, 0, 0);
   if(second % 3 == 0 || needRepaintAll) {
-    shiftData();
+    shiftData(true);
     readSensorData();
     tft.setColor(153, 153, 140);
     tft.drawRect(8, 99, 311, 151);
@@ -97,19 +105,18 @@ void printAll(boolean needRepaintAll) {
 
 void setup()
 {
+  Serial.begin(9600);
   Serial2.begin(9600);
   WiFi.init(&Serial2);
   if (WiFi.status() == WL_NO_SHIELD) {
     while (true);
   }
-  connectToWifi();
-  Udp.begin(localPort);
   randomSeed(analogRead(0));
   initTime();
   tft.InitLCD();
   tft.setFont(SmallFont);
   tft.clrScr();
-  generateDatas();
+  initSensor();
   displayPage = 0;
   prevBtn.initButton(&tft,  25, 20, 50, 35, OUTLINE_COLOR, PREV_COLOR, BLACK, "PREV", 1);
   nextBtn.initButton(&tft,  25, 60, 50, 35, OUTLINE_COLOR, NEXT_COLOR, BLACK, "NEXT", 1);
@@ -120,8 +127,10 @@ void setup()
 
 void loop()
 {
-  if(millis() % 25500 == 0) {
+  if(hour % 6 == 0 && lastTimeUpdate != hour) {
     timeStamp = getTimeStamp();
+    rtc.adjust(DateTime(timeStamp));
+    lastTimeUpdate = hour;
   }
   checkPress();
   if(millis() % 1000 == 0) {

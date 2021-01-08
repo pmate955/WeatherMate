@@ -1,13 +1,13 @@
-
-
 void initTime() {
   Wire.begin();
   rtc.begin();
-  if (!rtc.isrunning()) {
-    timeStamp = getTimeStamp();
+  unsigned long newTimeStamp = getTimeStamp();
+  if(newTimeStamp != 0) {
+    timeStamp = newTimeStamp;
+    Serial.println("TIMESTAMP " + String(newTimeStamp));
     rtc.adjust(DateTime(timeStamp));
+    setTimeValues();
   }
-  setTimeValues();
 }
 
 void setTimeValues() {

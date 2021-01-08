@@ -1,17 +1,31 @@
-void connectToWifi() {
-  status = WiFi.begin(ssid, pass);
+boolean connectToWifi() {
+  if(WiFi.status() != WL_CONNECTED) {
+    status = WiFi.begin(ssid, pass);
+    if(status != WL_CONNECTED) return false;
+  }
+  Udp.begin(localPort);
+  return true;
 }
 
 unsigned long getTimeStamp() {
-  sendNTPpacket(timeServer); // send an NTP packet to a time server
-  unsigned long startMs = millis();
-  while (!Udp.available() && (millis() - startMs) < UDP_TIMEOUT) {}
-  if (Udp.parsePacket()) {
-    Udp.read(packetBuffer, NTP_PACKET_SIZE);
-    unsigned long highWord = word(packetBuffer[40], packetBuffer[41]);
-    unsigned long lowWord = word(packetBuffer[42], packetBuffer[43]);
-    unsigned long secsSince1900 = highWord << 16 | lowWord;
-    return secsSince1900;  
+  if(connectToWifi()) {
+    sendNTPpacket(timeServer); // send an NTP packet to a time server
+    unsigned long startMs = millis();
+    while (!Udp.available() && (millis() - startMs) < UDP_TIMEOUT) {}
+    if (Udp.parsePacket()) {
+      Udp.read(packetBuffer, NTP_PACKET_SIZE);
+      unsigned long highWord = word(packetBuffer[40], packetBuffer[41]);
+      unsigned long lowWord = word(packetBuffer[42], packetBuffer[43]);
+      unsigned long secsSince1900 = highWord << 16 | lowWord;
+      const unsigned long seventyYears = 2208988800UL;
+      unsigned long epoch = secsSince1900 - seventyYears;
+      Udp.stop();
+      return epoch;  
+    }
+    Udp.stop();
+    return 0;
+  } else {
+    return 0;    
   }
 }
 

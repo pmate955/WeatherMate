@@ -12,10 +12,11 @@ String getUnit(byte dataType) {
   }
 }
 
-void getMinMax(short* temps, float* minMax) {
+void getMinMax(short* temps, float* minMax, boolean isInside) {
   float max = temps[0];
   float min = temps[0];
   for(int i = 0; i < STORE_SIZE; i++) {
+    if((isInside && !inValidDatas[i]) || (!isInside && !outValidDatas[i])) continue;  
     if(temps[i] < min) min = temps[i];
     if(temps[i] > max) max = temps[i];
   }
@@ -26,8 +27,8 @@ void getMinMax(short* temps, float* minMax) {
 void printGraph(short* inData, short* outData, byte dataType) {
   float minMaxIn[2]; 
   float minMaxOut[2];
-  getMinMax(inData, minMaxIn);
-  getMinMax(outData, minMaxOut);
+  getMinMax(inData, minMaxIn, true);
+  getMinMax(outData, minMaxOut, false);
   float deltaIn = (minMaxIn[1] - minMaxIn[0]) / 50;
   float deltaOut = (minMaxOut[1] - minMaxOut[0]) / 50;
   tft.setColor(245, 245, 60);
@@ -48,8 +49,8 @@ void printGraph(short* inData, short* outData, byte dataType) {
     tft.drawLine(x + 10, 220, x + 10, 170); 
     tft.drawLine(x + 10, 150, x + 10, 100); 
     tft.setColor (31,86,148);
-    tft.drawLine(x + 10, 220, x + 10, 220 - sizeIn);
-    tft.drawLine(x + 10, 150, x + 10, 150 - sizeOut);
+    if(inValidDatas[x]) tft.drawLine(x + 10, 220, x + 10, 220 - sizeIn);
+    if(outValidDatas[x]) tft.drawLine(x + 10, 150, x + 10, 150 - sizeOut);
     if(ctr % 24 == 0) {
       tft.setColor(153, 153, 140);
       tft.drawLine(x + 10, 150, x + 10, 153);
