@@ -27,8 +27,7 @@ void checkPress() {
         nextBtn.drawButton(false);
       }
       prevBtn.drawButton(displayPage == 0);
-      printAll(true);
-      
+      printAll(true);    
   }
   if (nextBtn.justPressed()) {
       if(displayPage < MAX_MENU_PAGE) {

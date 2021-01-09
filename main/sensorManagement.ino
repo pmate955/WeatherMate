@@ -17,12 +17,12 @@ void shiftData(boolean inside) {
   for(int i = 0; i < STORE_SIZE - 1; i++){
     if(inside){
       inTemps[i] = inTemps[i+1];
-      inHumidity[i] = inHumidity[i+1];
-      pressure[i] = pressure[i+1];
+      inHumiditys[i] = inHumiditys[i+1];
+      pressures[i] = pressures[i+1];
       inValidDatas[i] = inValidDatas[i+1];
     } else {
       outTemps[i] = outTemps[i+1];
-      outHumidity[i] = outHumidity[i+1];
+      outHumiditys[i] = outHumiditys[i+1];
       outValidDatas[i] = outValidDatas[i+1];
     }  
   }
@@ -30,7 +30,14 @@ void shiftData(boolean inside) {
 
 void readSensorData() {
   inTemps[STORE_SIZE - 1] = (short)(bme.readTemperature() * 10);
-  inHumidity[STORE_SIZE - 1] = (short)(bme.readHumidity() * 10);
-  pressure[STORE_SIZE - 1] = (short)((bme.readPressure() / 100.0F)  * 10);
+  inHumiditys[STORE_SIZE - 1] = (short)(bme.readHumidity() * 10);
+  pressures[STORE_SIZE - 1] = (short)((bme.readPressure() / 100.0F)  * 10);
   inValidDatas[STORE_SIZE - 1] = true;
+}
+
+void addOutData() {
+  shiftData(false);
+  outTemps[STORE_SIZE - 1] = outTemp;
+  outHumiditys[STORE_SIZE - 1] = outHumidity;
+  outValidDatas[STORE_SIZE - 1] = true;
 }

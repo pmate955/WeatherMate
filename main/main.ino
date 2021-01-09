@@ -1,4 +1,5 @@
 
+#define _ESPLOGLEVEL_ 4
 #include <UTFTGLUE.h>
 #include <Adafruit_GFX.h>
 #include <TouchScreen.h>
@@ -36,9 +37,16 @@ Adafruit_GFX_Button prevBtn, nextBtn;
 
 short inTemps[STORE_SIZE];   //Use short instead of float, because of memory usage
 short outTemps[STORE_SIZE];
-short inHumidity[STORE_SIZE];
-short outHumidity[STORE_SIZE];
-short pressure[STORE_SIZE];
+short inHumiditys[STORE_SIZE];
+short outHumiditys[STORE_SIZE];
+short pressures[STORE_SIZE];
+
+short inTemp;
+short outTemp;
+short inHumidity;
+short outHumidity;
+short pressure;
+
 
 boolean inValidDatas[STORE_SIZE];
 boolean outValidDatas[STORE_SIZE];
@@ -52,6 +60,8 @@ byte minute;
 byte second;
 
 byte lastTimeUpdate;
+unsigned long lastScreenUpdate;
+byte lastInUpdate;
 
 DS1307 rtc;
 Adafruit_BME280 bme;
@@ -72,6 +82,8 @@ const int UDP_TIMEOUT = 2000;    // timeout in miliseconds to wait for an UDP pa
 byte packetBuffer[NTP_PACKET_SIZE]; // buffer to hold incoming and outgoing packets
 
 WiFiEspUDP Udp;
+WiFiEspServer server(3000);
+RingBuffer buf(32);
 
 void printAll(boolean needRepaintAll) {
   if(needRepaintAll) {
@@ -86,7 +98,7 @@ void printAll(boolean needRepaintAll) {
   tft.print(getTimeString(), CENTER, 1);
   tft.print(" " + String(timeStamp), CENTER, 20);
   tft.setColor(255, 0, 0);
-  if(second % 3 == 0 || needRepaintAll) {
+  if(minute != lastInUpdate || needRepaintAll) {
     shiftData(true);
     readSensorData();
     tft.setColor(153, 153, 140);
@@ -96,11 +108,13 @@ void printAll(boolean needRepaintAll) {
     if(displayPage == 0) {
       printGraph(inTemps, outTemps, 0);
     } else if(displayPage == 1) {
-      printGraph(inHumidity, outHumidity, 1);
+      printGraph(inHumiditys, outHumiditys, 1);
     } else if(displayPage == 2) {
-      printGraph(pressure, pressure, 2);
+      printGraph(pressures, pressures, 2);
     } 
+    lastInUpdate = minute;
   } 
+  lastScreenUpdate = millis();
 }
 
 void setup()
@@ -111,6 +125,7 @@ void setup()
   if (WiFi.status() == WL_NO_SHIELD) {
     while (true);
   }
+  WiFi.beginAP("WeatherMate", 3, "asdasdasd", 4, false);
   randomSeed(analogRead(0));
   initTime();
   tft.InitLCD();
@@ -123,17 +138,19 @@ void setup()
   prevBtn.drawButton(false);
   nextBtn.drawButton(false);
   printAll(true);
+  server.begin();
 }
 
 void loop()
 {
   if(hour % 6 == 0 && lastTimeUpdate != hour) {
     timeStamp = getTimeStamp();
-    rtc.adjust(DateTime(timeStamp));
+    if(timeStamp != 0) rtc.adjust(DateTime(timeStamp));
     lastTimeUpdate = hour;
   }
   checkPress();
-  if(millis() % 1000 == 0) {
+  checkRequest();
+  if(millis() >= lastScreenUpdate + 500) {
     printAll(false);   
   }
 }

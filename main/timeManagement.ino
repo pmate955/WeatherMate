@@ -7,6 +7,9 @@ void initTime() {
     Serial.println("TIMESTAMP " + String(newTimeStamp));
     rtc.adjust(DateTime(timeStamp));
     setTimeValues();
+  } else {
+    rtc.adjust(DateTime("2021-01-19", "12:00"));
+    setTimeValues();
   }
 }
 
