@@ -1,5 +1,4 @@
 
-#define _ESPLOGLEVEL_ 4
 #include <UTFTGLUE.h>
 #include <Adafruit_GFX.h>
 #include <TouchScreen.h>
